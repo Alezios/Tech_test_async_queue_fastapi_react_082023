@@ -7,7 +7,7 @@ from BM.RabbitMQCaptionGeneratorProducer import RabbitMQCaptionGeneratorProducer
 
 class RabbitMQCaptionGeneratorService(ICaptionGenerator):
 
-    QUEUE_NAME = "images_queue"
+    QUEUE_NAME = "image_captioning"
 
     def __init__(self):
         self.producer = RabbitMQCaptionGeneratorProducer()
@@ -15,7 +15,7 @@ class RabbitMQCaptionGeneratorService(ICaptionGenerator):
         self.__startImageConsumer()
 
     def generateCaptionFor(self, imageLocaton: Path) -> str:
-        self.producer.produceCaptionRequest(imageLocaton)
+        self.producer.produceCaptionRequest(imageLocaton, self.QUEUE_NAME)
         return ""
 
     def stopService(self):

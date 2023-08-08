@@ -18,7 +18,7 @@ class RabbitMQCaptionGeneratorConsumer:
 
     def startConsumer(self, queueName: str):
         self.channel.queue_declare(queue=queueName)
-        self.channel.basic_consume('image_captioning', self.__handleImageMessage, auto_ack=True)
+        self.channel.basic_consume(queueName, self.__handleImageMessage, auto_ack=True)
         self.channel.start_consuming()
 
     def stopConsumer(self):
