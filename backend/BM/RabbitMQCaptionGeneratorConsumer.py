@@ -26,7 +26,9 @@ class RabbitMQCaptionGeneratorConsumer:
         self.connection.close()
 
     def __handleImageMessage(self, channel, method, header, body) -> str:
-        with open(file=str(body)[2:-1], mode="rb") as image:
-            print(str(header))
-            maxCaptionGeneratorResponse = requests.post(self.CODAIT_MAX_CAPTION_GENERATOR_URL, files={"image": image},)
+        path = str(body)[2:-1]
+        files = {
+            'image': (path, open(path, 'rb'), 'image/png'), # This adds the content-type **in** the form-data value (not in the headers)
+        }
+        maxCaptionGeneratorResponse = requests.post(self.CODAIT_MAX_CAPTION_GENERATOR_URL, files=files,)
         print(maxCaptionGeneratorResponse.text)
