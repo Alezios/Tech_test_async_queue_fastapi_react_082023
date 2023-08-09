@@ -1,19 +1,20 @@
 from abc import ABC, abstractmethod
 from fastapi import UploadFile
+from BM.Image import Image
 
 
 class IImageRepository(ABC):
 
     @abstractmethod
-    def registerNewImage(self, image: UploadFile) -> int:
+    def registerImage(self, image: Image):
         pass
 
     @abstractmethod
-    def searchImage(self, keywords: list[str]):
+    def searchImage(self, keywords: list[str]) -> Image:
         pass
 
     @abstractmethod
-    def getImageLocationById(self, imageId: int) -> str:
+    def getImageById(self, imageId: int) -> Image:
         pass
 
     @abstractmethod

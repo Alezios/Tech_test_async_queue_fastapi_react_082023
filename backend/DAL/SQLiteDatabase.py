@@ -1,8 +1,8 @@
-from fastapi import UploadFile
 from BM.IImageRepository import IImageRepository
 from datetime import datetime
 from pathlib import Path
 import sqlite3
+from BM.Image import Image
 
 
 class SQLiteDatabase(IImageRepository):
@@ -17,22 +17,23 @@ class SQLiteDatabase(IImageRepository):
         self.connection = sqlite3.connect(self.SQLITE_DB_DIRECTORY_PATH / self.SQLITE_DB_NAME)
         self.__checkAndCreateDatabaseTables()
 
-    async def registerNewImage(self, image: UploadFile) -> int:
-        imageLocation = await self.__saveImageInFilesystem(image)
-        imageId = self.__saveImagePathInDB(imageLocation)
-        return imageId
+    def registerImage(self, image: Image):
+        self.__saveImageInFilesystem(image)
+        self.__saveImageInDB(image)
 
 
-    def searchImage(self, keywords: list[str]):
+    def searchImage(self, keywords: list[str]) -> Image:
         pass
 
-    def getImageLocationById(self, imageId: int) -> str:
+    def getImageById(self, imageId: int) -> Image:
+        """
         cursor = self.connection.cursor()
         cursor.execute("SELECT path from Image WHERE imageId = " + str(imageId))
         path = cursor.fetchone()
         if path is not None:
             return path[0]
-
+        """
+        pass
 
     def addCaption(self, imageId: int, caption: str):
         pass
@@ -43,7 +44,7 @@ class SQLiteDatabase(IImageRepository):
         cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Image'")
         if cursor.fetchone()[0] != 1:
             print("Table Image doesn't exist. Creating...")
-            cursor.execute("CREATE TABLE Image (imageId INTEGER PRIMARY KEY AUTOINCREMENT, path VARCHAR(255) NOT NULL, caption VARCHAR(255))")
+            cursor.execute("CREATE TABLE Image (imageId INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(255) NOT NULL, mimetype VARCHAR(50) NOT NULL, path VARCHAR(255) NOT NULL, caption VARCHAR(255))")
 
         cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Keyword'")
         if cursor.fetchone()[0] != 1:
@@ -57,24 +58,20 @@ class SQLiteDatabase(IImageRepository):
 
         cursor.close()
 
-    async def __saveImageInFilesystem(self, image: UploadFile) -> Path:
+    def __saveImageInFilesystem(self, image: Image):
         if not self.IMAGES_DIRECTORY_PATH.is_dir():
             self.IMAGES_DIRECTORY_PATH.mkdir(parents=True, exist_ok=True)
         now = datetime.now()
-        imageFilename = image.filename.split(".")
+        imageFilename = image.name.split(".")
         imageFilePath = (self.IMAGES_DIRECTORY_PATH / (imageFilename[0] + "_" +
                                                        now.strftime("%d%m%Y%H%M%S") + "." + imageFilename[1]))
         with open(imageFilePath, "wb") as img:
-            imgAsBytes = await image.read()
-            img.write(imgAsBytes)
+            img.write(image.imageData)
             img.close()
-        return imageFilePath
+        image.path = imageFilePath
 
-    def __saveImagePathInDB(self, pathToImage: Path) -> int:
+    def __saveImageInDB(self, image: Image):
         cursor = self.connection.cursor()
-        cursor.execute("INSERT INTO Image (path) VALUES ('" + str(pathToImage) + "')")
+        cursor.execute("INSERT INTO Image (name, mimetype, path, caption) VALUES ('" + str(image.name) + "', '" +
+                       str(image.mimetype) + "', '" + str(image.path) + "', '" + str(image.caption) +"')")
         self.connection.commit()
-        cursor.execute("SELECT imageId FROM Image WHERE path = '" + str(pathToImage) +"'")
-        imageId = cursor.fetchone()[0]
-        cursor.close()
-        return imageId
