@@ -18,5 +18,5 @@ class IImageRepository(ABC):
         pass
 
     @abstractmethod
-    def addCaption(self, imageId: int, caption: str):
+    def updateImageCaption(self, image: Image):
         pass

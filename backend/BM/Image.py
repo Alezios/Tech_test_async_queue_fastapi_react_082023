@@ -6,7 +6,7 @@ from pathlib import Path
 class Image:
 
     def __init__(self, file: UploadFile = None, imageId: int = None, path: str = "", caption: str = "", name: str = "",
-                 mimetype: str = "", imageData: bytes = None):
+                 mimetype: str = ""):
         self.imageId = imageId
         self.path = path
         self.caption = caption
@@ -22,7 +22,6 @@ class Image:
         else:
             self.name = name
             self.mimetype = mimetype
-            self.imageData = imageData
 
     def __checkIsImageFile(self, file: UploadFile) -> bool:
         result = True

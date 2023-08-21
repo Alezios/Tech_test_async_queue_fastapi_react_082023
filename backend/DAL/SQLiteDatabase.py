@@ -1,3 +1,4 @@
+import re
 from BM.IImageRepository import IImageRepository
 from datetime import datetime
 from pathlib import Path
@@ -6,6 +7,7 @@ from BM.Image import Image
 
 
 class SQLiteDatabase(IImageRepository):
+
 
     SQLITE_DB_NAME = "db_images.db"
     SQLITE_DB_DIRECTORY_PATH = Path(__file__).parent / "db/"
@@ -31,14 +33,38 @@ class SQLiteDatabase(IImageRepository):
         image = cursor.fetchone()
         imageAsObj = None
         if image is None:
-            print("SQLiteDatabase has no image with id : " + imageId)
+            print("SQLiteDatabase has no image with id : " + str(imageId))
+            cursor.close()
         else:
             print(image)
             imageAsObj = Image(imageId=image[0], name=image[1], mimetype=image[2], path=image[3], caption=image[4])
+            cursor.close()
         return imageAsObj
 
-    def addCaption(self, imageId: int, caption: str):
-        pass
+    def updateImageCaption(self, image: Image):
+        cursor = self.connection.cursor()
+        # check if image is already known
+        cursor.execute("SELECT imageId from Image WHERE imageId="+str(image.imageId))
+        if cursor.fetchone() is None:
+            raise IndexError("Image with id: " + str(image.imageId) + ", does not exist in SQLiteDatabase")
+        else:
+            # for the first iteration of this project, we only update the caption as other parameters
+            # aren't supposed to change
+            cursor.execute("UPDATE Image SET caption = '" + image.caption + "' WHERE imageId=" + str(image.imageId))
+            self.connection.commit()
+            # insert keywords from the caption into the Keyword table. Ignore insertion if the same keyword is already
+            # present in the table
+            keywords = re.compile("\w+").findall(image.caption)
+            # adding square brackets to keywords because the following executemany expects nested structures to bind
+            # parameters 
+            for i in range(len(keywords)):
+                keywords[i] = [keywords[i]]
+            cursor.executemany("INSERT OR IGNORE INTO Keyword(keyword) VALUES(?)", keywords)
+            self.connection.commit()
+            cursor.executemany("INSERT INTO ImageKeyword(imageId, keywordId) VALUES (" + str(image.imageId)
+                               + ",(SELECT keywordId FROM Keyword WHERE keyword = ?))", keywords)
+            self.connection.commit()
+
 
     def __checkAndCreateDatabaseTables(self):
         cursor = self.connection.cursor()

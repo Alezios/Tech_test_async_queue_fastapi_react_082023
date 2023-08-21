@@ -23,7 +23,7 @@ class RabbitMQCaptionGeneratorConsumer:
         self.channel.stop_consuming()
         self.connection.close()
 
-    def __handleImageMessage(self, channel, method, header, body) -> str:
+    def __handleImageMessage(self, channel, method, header, body):
         # with the current configuration of the caption generator service, body should be an image's database id
         imageId = int(body)
         imageToGenerateCaptionFor = self.imageRepository.getImageById(imageId)
@@ -33,3 +33,5 @@ class RabbitMQCaptionGeneratorConsumer:
         }
         maxCaptionGeneratorResponse = requests.post(self.CODAIT_MAX_CAPTION_GENERATOR_URL, files=files,)
         imageToGenerateCaptionFor.caption = maxCaptionGeneratorResponse.json()["predictions"][0]["caption"]
+        print(imageToGenerateCaptionFor.caption)
+        self.imageRepository.updateImageCaption(imageToGenerateCaptionFor)
