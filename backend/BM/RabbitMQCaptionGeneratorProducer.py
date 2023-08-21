@@ -10,8 +10,8 @@ class RabbitMQCaptionGeneratorProducer:
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
 
-    def produceCaptionRequest(self, imageLocation: Path, queueName: str):
+    def produceCaptionRequest(self, imageRepositoryIdentifier, queueName: str):
         self.channel.queue_declare(queue=queueName)
-        self.channel.basic_publish(exchange='', routing_key=queueName, body=str(imageLocation))
+        self.channel.basic_publish(exchange='', routing_key=queueName, body=str(imageRepositoryIdentifier))
         print(f" [x] Sent image to queue'")
 

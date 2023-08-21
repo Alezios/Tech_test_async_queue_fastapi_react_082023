@@ -17,6 +17,7 @@ class ImageController:
 
     def registerImage(self, image: Image):
         self.repository.registerImage(image)
+        self.__generateCaptionForImage(image)
 
     def __generateCaptionForImage(self, image: Image):
         """
@@ -27,5 +28,5 @@ class ImageController:
             caption = captionGenerator.generateCaptionFor(path)
             print(caption)
         """
-        pass
+        self.captionGenerator.generateCaptionFor(image)
 

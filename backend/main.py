@@ -7,7 +7,7 @@ from BM.ImageController import ImageController
 
 app = FastAPI()
 database: IImageRepository = SQLiteDatabase()
-captionGenerator = RabbitMQCaptionGeneratorService()
+captionGenerator = RabbitMQCaptionGeneratorService(database)
 
 
 

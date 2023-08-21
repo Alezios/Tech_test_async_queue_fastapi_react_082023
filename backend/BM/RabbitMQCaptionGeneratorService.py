@@ -1,6 +1,7 @@
 import threading
-from pathlib import Path
 from BM.ICaptionGenerator import ICaptionGenerator
+from BM.IImageRepository import IImageRepository
+from BM.Image import Image
 from BM.RabbitMQCaptionGeneratorConsumer import RabbitMQCaptionGeneratorConsumer
 from BM.RabbitMQCaptionGeneratorProducer import RabbitMQCaptionGeneratorProducer
 
@@ -9,13 +10,13 @@ class RabbitMQCaptionGeneratorService(ICaptionGenerator):
 
     QUEUE_NAME = "image_captioning"
 
-    def __init__(self):
+    def __init__(self, imageRepository: IImageRepository):
         self.producer = RabbitMQCaptionGeneratorProducer()
-        self.consumer = RabbitMQCaptionGeneratorConsumer()
+        self.consumer = RabbitMQCaptionGeneratorConsumer(imageRepository)
         self.__startImageConsumer()
 
-    def generateCaptionFor(self, imageLocaton: Path) -> str:
-        self.producer.produceCaptionRequest(imageLocaton, self.QUEUE_NAME)
+    def generateCaptionFor(self, image: Image):
+        self.producer.produceCaptionRequest(imageRepositoryIdentifier=image.imageId, queueName=self.QUEUE_NAME)
         return ""
 
     def stopService(self):

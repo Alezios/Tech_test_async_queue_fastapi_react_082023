@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
+from BM.Image import Image
+
 
 class ICaptionGenerator(ABC):
 
     @abstractmethod
-    def generateCaptionFor(self, imageLocation: Path) -> str:
+    def generateCaptionFor(self, image: Image):
         pass
 

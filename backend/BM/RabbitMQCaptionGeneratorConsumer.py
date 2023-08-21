@@ -1,16 +1,14 @@
-import base64
-import io
-import json
-from pathlib import Path
 import pika
 import requests
+from BM.IImageRepository import IImageRepository
 
 
 class RabbitMQCaptionGeneratorConsumer:
 
     CODAIT_MAX_CAPTION_GENERATOR_URL = "http://localhost:5000/model/predict"
 
-    def __init__(self):
+    def __init__(self, imageRepository: IImageRepository):
+        self.imageRepository = imageRepository
         credentials = pika.PlainCredentials("guest", "guest")
         parameters = pika.ConnectionParameters(host='localhost', credentials=credentials)
         self.connection = pika.BlockingConnection(parameters)
@@ -26,9 +24,12 @@ class RabbitMQCaptionGeneratorConsumer:
         self.connection.close()
 
     def __handleImageMessage(self, channel, method, header, body) -> str:
-        path = str(body)[2:-1]
+        # with the current configuration of the caption generator service, body should be an image's database id
+        imageId = int(body)
+        imageToGenerateCaptionFor = self.imageRepository.getImageById(imageId)
+        path = imageToGenerateCaptionFor.path
         files = {
-            'image': (path, open(path, 'rb'), 'image/png'), # This adds the content-type **in** the form-data value (not in the headers)
+            'image': (path, open(path, 'rb'), imageToGenerateCaptionFor.mimetype), # This adds the content-type **in** the form-data value (not in the headers)
         }
         maxCaptionGeneratorResponse = requests.post(self.CODAIT_MAX_CAPTION_GENERATOR_URL, files=files,)
-        print(maxCaptionGeneratorResponse.text)
+        imageToGenerateCaptionFor.caption = maxCaptionGeneratorResponse.json()["predictions"][0]["caption"]

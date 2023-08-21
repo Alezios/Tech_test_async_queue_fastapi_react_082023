@@ -14,7 +14,7 @@ class SQLiteDatabase(IImageRepository):
     def __init__(self):
         if not self.SQLITE_DB_DIRECTORY_PATH.is_dir():
             self.SQLITE_DB_DIRECTORY_PATH.mkdir(parents=True, exist_ok=True)
-        self.connection = sqlite3.connect(self.SQLITE_DB_DIRECTORY_PATH / self.SQLITE_DB_NAME)
+        self.connection = sqlite3.connect(self.SQLITE_DB_DIRECTORY_PATH / self.SQLITE_DB_NAME, check_same_thread=False)
         self.__checkAndCreateDatabaseTables()
 
     def registerImage(self, image: Image):
@@ -26,14 +26,16 @@ class SQLiteDatabase(IImageRepository):
         pass
 
     def getImageById(self, imageId: int) -> Image:
-        """
         cursor = self.connection.cursor()
-        cursor.execute("SELECT path from Image WHERE imageId = " + str(imageId))
-        path = cursor.fetchone()
-        if path is not None:
-            return path[0]
-        """
-        pass
+        cursor.execute("SELECT * from Image WHERE imageId = " + str(imageId))
+        image = cursor.fetchone()
+        imageAsObj = None
+        if image is None:
+            print("SQLiteDatabase has no image with id : " + imageId)
+        else:
+            print(image)
+            imageAsObj = Image(imageId=image[0], name=image[1], mimetype=image[2], path=image[3], caption=image[4])
+        return imageAsObj
 
     def addCaption(self, imageId: int, caption: str):
         pass
@@ -75,3 +77,6 @@ class SQLiteDatabase(IImageRepository):
         cursor.execute("INSERT INTO Image (name, mimetype, path, caption) VALUES ('" + str(image.name) + "', '" +
                        str(image.mimetype) + "', '" + str(image.path) + "', '" + str(image.caption) +"')")
         self.connection.commit()
+        # update image autoincremented id (filthy)
+        cursor.execute("SELECT MAX(imageId) FROM Image")
+        image.imageId = int(cursor.fetchone()[0])
