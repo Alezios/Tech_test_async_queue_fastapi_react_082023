@@ -6,12 +6,24 @@ from DAL.SQLiteDatabase import SQLiteDatabase
 from BM.Image import Image
 from BM.RabbitMQCaptionGeneratorService import RabbitMQCaptionGeneratorService
 from BM.ImageController import ImageController
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 database: IImageRepository = SQLiteDatabase()
 captionGenerator = RabbitMQCaptionGeneratorService(database)
-
-
 
 @app.post("/image/upload", status_code=status.HTTP_201_CREATED)
 async def uploadImage(image: UploadFile):
