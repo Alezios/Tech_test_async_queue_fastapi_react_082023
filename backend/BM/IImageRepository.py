@@ -10,7 +10,7 @@ class IImageRepository(ABC):
         pass
 
     @abstractmethod
-    def searchImage(self, keywords: list[str]) -> Image:
+    def searchImage(self, keywords: list[str]) -> list[Image]:
         pass
 
     @abstractmethod

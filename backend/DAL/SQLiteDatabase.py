@@ -24,8 +24,19 @@ class SQLiteDatabase(IImageRepository):
         self.__saveImageInDB(image)
 
 
-    def searchImage(self, keywords: list[str]) -> Image:
-        pass
+    def searchImage(self, keywords: list[str]) -> list[Image]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM Image WHERE imageId IN (SELECT imageId FROM ImageKeyword ik JOIN Keyword k ON ik.keywordId=k.keywordId WHERE k.keyword IN (%s))" % ",".join("?"*len(keywords)), keywords)
+        images = cursor.fetchall()
+        imagesAsObj = []
+        if len(images) == 0:
+            print("SQLiteDatabase has no image corresponding with keywords : %s" % " ".join(keywords))
+            cursor.close()
+        else:
+            for i in images:
+                imagesAsObj.append(Image(imageId=i[0], name=i[1], mimetype=i[2], path=i[3], caption=i[4]))
+            cursor.close()
+        return imagesAsObj
 
     def getImageById(self, imageId: int) -> Image:
         cursor = self.connection.cursor()
